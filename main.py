@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI , Depends, HTTPException,BackgroundTasks
+from fastapi import FastAPI , Depends, HTTPException,BackgroundTasks, Response
 from database.Database import engine,Base , get_db, AsyncSession
-from schema.User import MessageCreate , UserCreate 
+from schema.User import MessageCreate , UserCreate , UserLogin 
 from services.User import UserService
+from services.Auth import AuthService
 from model.Model import User
 from email.mime.text import MIMEText
 import smtplib
@@ -26,6 +27,7 @@ app= FastAPI(debug=True,lifespan=lifespan)
 def hello():
     return{"message":"welcome to Ashatech"}
 
+#----------------------------------------------------------------------------------------------------------------------------------------#
 
 @app.post("/register")
 async def create_user(user_input:UserCreate,db:AsyncSession=Depends(get_db)):
@@ -33,6 +35,22 @@ async def create_user(user_input:UserCreate,db:AsyncSession=Depends(get_db)):
     await user_service.create_user(user_input)
     return "user is created"
     
+#-----------------------------------------------------------------------------------------------------------------------------------------#
+
+@app.post("/login")
+async def login_user(user_input:UserLogin, response:Response,db: AsyncSession =Depends(get_db)):
+    auth_service  = AuthService(db)
+    token_data = await auth_service.login_user(user_input)
+    response.set_cookie(
+        key = "access_token",
+        value= token_data,
+        httponly=True,
+        secure = True,
+        samesite= "lax"
+    )
+    return {
+        "message": token_data
+    }
 
 
 # ---------------------------------------send email message from a contact from-----------------------------------------------------------#

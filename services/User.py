@@ -35,8 +35,5 @@ class UserService():
             raise ValueError("email is already registered ")
         return user_create
     
-    async def authenticate_user(self, email: str, password: str) -> User | None:
-        user = await self.get_user_by_email(email)
-        if user and verify_password(password, user.password):
-            return user
-        return None
+    
+    

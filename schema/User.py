@@ -23,3 +23,7 @@ class UserCreate(BaseModel):
             return UserRole.user
         return v
     password: str =Field(max_length=18, min_length=6)
+    
+class UserLogin(BaseModel):
+    email: str = Field(..., description="email")
+    password:str = Field(...,min_length=8, max_length=18)

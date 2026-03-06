@@ -33,7 +33,7 @@ class AuthService:
         
         return {
             "id": user.id,
-            "username": user.username,
+            "name": user.name,
             "email": user.email,
             "phone": user.phone_no,
             "role": user.role,

@@ -1,12 +1,17 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI , Depends, HTTPException,BackgroundTasks, Response
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials , HTTPBearer
 from database.Database import engine,Base , get_db, AsyncSession
 from schema.User import MessageCreate , UserCreate , UserLogin 
 from services.User import UserService
 from services.Auth import AuthService
 from model.Model import User
 from email.mime.text import MIMEText
+from core.Security import JWT_ALGORITHM, create_access_token
 import smtplib
+from jose import jwt,JWTError
+from datetime import timedelta 
 from core.Config import settings
 
 @asynccontextmanager
@@ -51,8 +56,39 @@ async def login_user(user_input:UserLogin, response:Response,db: AsyncSession =D
     return {
         "message": token_data
     }
+#-----------------------------------------------------------------------------------------------------------------------------------------#
+@app.post("/refresh")
+def refresh_access_token(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    
+    refresh_access = credentials.credentials
+    
+    try:
+        payload = jwt.decode(refresh_access, settings.SECRET_KEY,algorithms= [JWT_ALGORITHM] )
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=403, detail="Invalid token type")
+        
+        user_id = payload.get("sub")
+    
+    except JWTError:
+        raise HTTPException(status_code=403, detail = "Invalid or expired refresh token ")
+    
+    new_access_token = create_access_token(
+        data= {"sub": user_id, "type": "access"},
+        expires_delta= timedelta(minutes = settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return {
+        "access_token ": new_access_token,
+        "token_type": "bearer"
+    }       
+    
 
-
+#------------------------------------------------------------------------------------------------------------------------------------------#
+@app.post("/logout")
+def logout():
+    response = JSONResponse({"message": "Logout"})
+    response.delete_cookie("access_token")
+    return response
+    
 # ---------------------------------------send email message from a contact from-----------------------------------------------------------#
 
 

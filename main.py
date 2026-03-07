@@ -13,15 +13,12 @@ import smtplib
 from jose import jwt,JWTError
 from datetime import timedelta 
 from core.Config import settings
+from schema.Blog import BlogCreate
+from services.Blog import BlogService
 
 @asynccontextmanager
 async def lifespan(app=FastAPI):
     async with engine.begin() as conn:
-        
-        table_exists = await conn.run_sync(
-            lambda sync_conn: engine.dialect.has_table(sync_conn, User.__tablename__)
-        )
-        if not table_exists:
             await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
@@ -32,7 +29,7 @@ app= FastAPI(debug=True,lifespan=lifespan)
 def hello():
     return{"message":"welcome to Ashatech"}
 
-#----------------------------------------------------------------------------------------------------------------------------------------#
+#-------------------------------------------------register------------------------------------------------------------------------------------#
 
 @app.post("/register")
 async def create_user(user_input:UserCreate,db:AsyncSession=Depends(get_db)):
@@ -40,7 +37,7 @@ async def create_user(user_input:UserCreate,db:AsyncSession=Depends(get_db)):
     await user_service.create_user(user_input)
     return "user is created"
     
-#-----------------------------------------------------------------------------------------------------------------------------------------#
+#--------------------------------------------------login---------------------------------------------------------------------------------------#
 
 @app.post("/login")
 async def login_user(user_input:UserLogin, response:Response,db: AsyncSession =Depends(get_db)):
@@ -56,7 +53,7 @@ async def login_user(user_input:UserLogin, response:Response,db: AsyncSession =D
     return {
         "message": token_data
     }
-#-----------------------------------------------------------------------------------------------------------------------------------------#
+#--------------------------------------------------refresh---------------------------------------------------------------------------------------#
 @app.post("/refresh")
 def refresh_access_token(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     
@@ -82,13 +79,35 @@ def refresh_access_token(credentials: HTTPAuthorizationCredentials = Depends(HTT
     }       
     
 
-#------------------------------------------------------------------------------------------------------------------------------------------#
+#---------------------------------------------logout----------------------------------------------------------------------------#
 @app.post("/logout")
 def logout():
     response = JSONResponse({"message": "Logout"})
     response.delete_cookie("access_token")
     return response
+
+#--------------------------------------------create blog--------------------------------------------------------------------------
+@app.post("/blog")
+async def create_blog(user_input:BlogCreate, db:AsyncSession = Depends(get_db)):
+    blog_service = BlogService(db)
+    await blog_service.create_blog(user_input)
+    return {
+        "message": "Blog is created"
+    }    
     
+#--------------------------------------------get blog data--------------------------------------------------------------------------
+# @app.get("/blog_all")
+# async def get_blog(db:AsyncSession= Depends(get_db)):
+#     blog_service = BlogService(db)
+#     blog = await blog_service.get_blog()
+#     return blog
+
+#-----------------------------------------get blog by id----------------------------------------------------------------------------------
+# @app.get("blog_id")
+# async def get_blog_by_id(blog_id:int,db:AsyncSession = Depends(get_db)):
+#     blog_service = BlogService(db)
+#     blog = await blog_service.get_blog_by_id(blog_id)
+#     return blog 
 # ---------------------------------------send email message from a contact from-----------------------------------------------------------#
 
 

@@ -1,0 +1,26 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from schema.Blog import BlogCreate  
+from model.Model import Blog
+from sqlalchemy import select
+
+
+class BlogService:
+    def __init__(self, db: AsyncSession):
+        self.db: AsyncSession = db
+        
+    async def create_blog(self, user_input:BlogCreate):
+        blog_create = Blog(**user_input.model_dump())
+        self.db.add(blog_create)
+        await self.db.commit()
+        await self.db.refresh(blog_create)
+        return blog_create 
+    
+    
+    # async def get_blog(self):
+    #     result = await self.db.execute(select(Blog))
+    #     return result.scalars().all()
+    
+    # async def get_blog_by_id(self, blog_id:int):
+    #     result = await self.db.execute(select(Blog).where(Blog.id == blog_id))
+    #     return result.scalar().first()
+        

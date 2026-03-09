@@ -22,4 +22,6 @@ class BlogCreate(BaseModel):
     section: List[section]
     conclusion: str
     contact_information: information
-    
+
+class BlogUpdate(BlogCreate):
+    pass    

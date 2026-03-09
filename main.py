@@ -13,7 +13,7 @@ import smtplib
 from jose import jwt,JWTError
 from datetime import timedelta 
 from core.Config import settings
-from schema.Blog import BlogCreate
+from schema.Blog import BlogCreate, BlogUpdate
 from services.Blog import BlogService
 
 @asynccontextmanager
@@ -96,18 +96,34 @@ async def create_blog(user_input:BlogCreate, db:AsyncSession = Depends(get_db)):
     }    
     
 #--------------------------------------------get blog data--------------------------------------------------------------------------
-# @app.get("/blog_all")
-# async def get_blog(db:AsyncSession= Depends(get_db)):
-#     blog_service = BlogService(db)
-#     blog = await blog_service.get_blog()
-#     return blog
+@app.get("/blog_all")
+async def get_blog(db:AsyncSession= Depends(get_db)):
+    blog_service = BlogService(db)
+    blog = await blog_service.get_blog()
+    return blog
 
 #-----------------------------------------get blog by id----------------------------------------------------------------------------------
-# @app.get("blog_id")
-# async def get_blog_by_id(blog_id:int,db:AsyncSession = Depends(get_db)):
-#     blog_service = BlogService(db)
-#     blog = await blog_service.get_blog_by_id(blog_id)
-#     return blog 
+@app.get("/blog_id")
+async def get_blog_by_id(blog_id:int,db:AsyncSession = Depends(get_db)):
+    blog_service = BlogService(db)
+    blog = await blog_service.get_blog_by_id(blog_id)
+    if not blog:
+        return{"message": "Blog not found"}
+    return blog
+
+
+#---------------------------------------------------update blog----------------------------------------------------------------------------
+@app.put("/update_blog")
+async def update_blog(blog_id: int,user_input: BlogUpdate, db:AsyncSession = Depends(get_db)):
+    blog_service = BlogService(db)
+    result = await blog_service.update_blog(blog_id,user_input)
+    return result 
+
+#-----------------------------------------------delete blog--------------------------------------------------------------------------------
+@app.delete("/delete_blog")
+async def delete_blog(blog_id:int, db:AsyncSession = Depends(get_db)):
+    blog_service = BlogService(db)
+    return await blog_service.delete_blog(blog_id)
 # ---------------------------------------send email message from a contact from-----------------------------------------------------------#
 
 
